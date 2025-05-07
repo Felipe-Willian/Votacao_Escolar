@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2>Painel Administrativo</h2>
+  <a href="/admin/new">Nova Votação</a>
+
+  {% for p in polls %}
+    <div>
+      <h3>{{ p.poll.title }}</h3>
+      <canvas id="chart-{{ loop.index0 }}"></canvas>
+    </div>
+  {% endfor %}
+
+  <script>
+    const pollData = [
+      {% for p in polls %}
+        {labels: {{ p.chart.labels|tojson }}, data: {{ p.chart.data|tojson }}}{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ];
+    document.addEventListener('DOMContentLoaded', () => {
+      pollData.forEach((cfg, i) => {
+        const ctx = document.getElementById(`chart-${i}`).getContext('2d');
+        new Chart(ctx, {type:'bar', data:{labels:cfg.labels,datasets:[{label:'Votos',data:cfg.data,backgroundColor:'rgba(75,192,192,0.6)'}]}});
+      });
+    });
+  </script>
+{% endblock %}

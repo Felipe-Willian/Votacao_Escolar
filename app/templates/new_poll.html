@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2>Criar Nova Votação</h2>
+  <form method="POST">
+    <label>Título:</label>
+    <input type="text" name="title" required>
+
+    <label>Descrição:</label>
+    <textarea name="description" required></textarea>
+
+    <label>Opções (uma por linha):</label>
+    <textarea name="options" required></textarea>
+
+    <label>Códigos Permitidos (ex: 1-01,2-05):</label>
+    <input type="text" name="codes" required>
+
+    <button type="submit">Criar</button>
+  </form>
+{% endblock %}
