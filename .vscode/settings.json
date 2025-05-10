@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+      "*.html": "jinja-html"
+    },
+    "jinja.validate.enable": false,
+    "javascript.validate.enable": false
+  }

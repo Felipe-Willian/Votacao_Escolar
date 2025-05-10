@@ -8,6 +8,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="container">
+    <nav class="mb-4">
+      <a href="{{ url_for('public.index') }}">Home</a> |
+      <a href="{{ url_for('admin.login') }}">Login Admin</a>
+    </nav>
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       <div>
