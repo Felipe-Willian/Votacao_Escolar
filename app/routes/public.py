@@ -99,7 +99,7 @@ def vote(poll_id):
              .single().execute().data
 
     # 1) Extrai IDs das classes permitidas (antes do '-')
-    class_ids = sorted({code.split('-')[0] for code in poll['allowed_codes']})
+    class_ids = sorted({code.rsplit('-', 1)[0] for code in poll['allowed_codes']})
     # 2) Busca títulos dessas classes
     classes = sb.table('classes')\
                 .select('id,title')\
