@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="py-4 text-center text-white bg-00a859 mb-4"><h1>Cadastro de Classes</h1></section>
+
+<div class="row">
+  <div class="col-md-6">
+    <h5>{{ edit and 'Editar' or 'Nova' }} Classe</h5>
+    <form method="POST">
+      <div class="mb-3">
+        <label class="form-label">Título da Classe</label>
+        <input type="text" name="title" class="form-control"
+               value="{{ edit.title if edit }}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Nº de Chamada</label>
+        <div class="row row-cols-5 g-2">
+          {% for i in range(1,51) %}
+            <div class="col">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="nums"
+                       id="n{{ i }}" value="{{ i }}"
+                       {% if edit and i in edit.student_numbers %}checked{% endif %}>
+                <label class="form-check-label" for="n{{ i }}">{{ '%02d' % i }}</label>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <button type="submit" class="btn btn-00a859">
+        {{ edit and 'Salvar Alterações' or 'Salvar Classe' }}
+      </button>
+    </form>
+  </div>
+
+  <div class="col-md-6">
+    <h5>Classes Cadastradas</h5>
+    <ul class="list-group">
+      {% for cls in classes %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ cls.title }}
+        <div>
+          <a href="{{ url_for('admin.edit_class', class_id=cls.id) }}" class="btn btn-sm btn-outline-primary me-1">✏️</a>
+          <a href="{{ url_for('admin.delete_class', class_id=cls.id) }}"
+             onclick="return confirm('Confirma exclusão?')"
+             class="btn btn-sm btn-outline-danger">🗑️</a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

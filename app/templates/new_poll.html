@@ -1,19 +1,99 @@
 {% extends 'base.html' %}
 {% block content %}
-  <h2>Criar Nova Votação</h2>
-  <form method="POST">
-    <label>Título:</label>
-    <input type="text" name="title" required>
+<section class="py-4 text-center text-white bg-00a859 mb-4">
+  <h1>{{ poll and 'Editar Votação' or 'Criar Votação' }}</h1>
+</section>
+<form method="POST" id="new-poll-form" class="col-6 mx-auto">
+  <div class="mb-3">
+    <label class="form-label">Título</label>
+    <input type="text" name="title" class="form-control" required
+      value="{{ poll.title if poll }}">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Descrição</label>
+    <textarea name="description" class="form-control" required>{{ poll.description if poll }}</textarea>
+  </div>
 
-    <label>Descrição:</label>
-    <textarea name="description" required></textarea>
+  <!-- Opções dinâmicas -->
+  <div class="mb-3">
+    <label class="form-label">Opções de Votação</label>
+    <div class="input-group mb-2">
+      <input type="text" id="opt-input" class="form-control" placeholder="Escreva uma opção">
+      <button type="button" id="add-option" class="btn btn-secondary">Adicionar</button>
+    </div>
+    <ul id="options-list" class="list-group"></ul>
+  </div>
 
-    <label>Opções (uma por linha):</label>
-    <textarea name="options" required></textarea>
+  <div class="mb-3">
+    <label class="form-label">Data de Expiração</label>
+    <input type="date" name="expiration_date" class="form-control" required
+      value="{{ poll.expiration_date[:10] if poll }}">
+  </div>
 
-    <label>Códigos Permitidos (ex: 1-01,2-05):</label>
-    <input type="text" name="codes" required>
+  <!-- Classes multi-select -->
+  <div class="mb-3">
+    <label class="form-label">Classes Permitidas</label>
+    <select id="class-select" class="form-select" multiple required>
+      {% for cls in classes %}
+      <option value="{{ cls.id }}"
+        {% if poll and cls.id in selected_classes %}selected{% endif %}>
+        {{ cls.title }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
 
-    <button type="submit">Criar</button>
-  </form>
+  <!-- Hidden inputs -->
+  <div id="hidden-fields"></div>
+
+  <button type="submit" class="btn btn-00a859 mb-5">{{ poll and 'Salvar Alterações' or 'Criar' }}</button>
+</form>
+
+<script>
+  const optInput     = document.getElementById('opt-input');
+  const addOptBtn    = document.getElementById('add-option');
+  const optionsList  = document.getElementById('options-list');
+  const hiddenFields = document.getElementById('hidden-fields');
+  const form         = document.getElementById('new-poll-form');
+
+  // Função para adicionar opção
+  function addOption(val) {
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between';
+    li.textContent = val;
+    const rm = document.createElement('button'); rm.type='button'; rm.className='btn btn-sm btn-danger'; rm.textContent='X';
+    rm.onclick = () => {
+      li.remove();
+      hiddenFields.querySelector(`input[value="${val}"]`)?.remove();
+    };
+    li.appendChild(rm);
+    optionsList.appendChild(li);
+    const h = document.createElement('input'); h.type='hidden'; h.name='options_list'; h.value=val;
+    hiddenFields.appendChild(h);
+  }
+
+  // Inicializa opções existentes
+  document.addEventListener('DOMContentLoaded', () => {
+    const existing = {{ poll.options|tojson if poll else '[]' }};
+    existing.forEach(opt => addOption(opt));
+  });
+
+  addOptBtn.addEventListener('click', () => {
+    const val = optInput.value.trim();
+    if (!val) return;
+    addOption(val);
+    optInput.value = '';
+  });
+
+  // Antes de submeter, cria hidden inputs para classes
+  form.addEventListener('submit', () => {
+    hiddenFields.querySelectorAll('input[name="class_ids"]').forEach(i=>i.remove());
+    Array.from(document.getElementById('class-select').selectedOptions)
+      .forEach(opt => {
+        const h = document.createElement('input');
+        h.type = 'hidden'; h.name='class_ids'; h.value=opt.value;
+        hiddenFields.appendChild(h);
+      });
+  });
+</script>
 {% endblock %}

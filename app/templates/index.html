@@ -1,13 +1,43 @@
 {% extends 'base.html' %}
 {% block content %}
-  <h2>Votações Disponíveis</h2>
-  <p><a href="{{ url_for('admin.login') }}" class="btn btn-secondary">Administração</a></p>
-  <ul>
-    {% for poll in polls %}
-      <li>
-        <strong>{{ poll.title }}</strong> - {{ poll.description }}
-        <a href="/vote/{{ poll.id }}">Votar</a>
-      </li>
-    {% endfor %}
-  </ul>
+<section class="py-4 text-center text-white bg-00a859 mb-4">
+  <h1>Votações Disponíveis</h1>
+</section>
+<div class="row g-3">
+  {% for poll in polls %}
+  <div class="col-md-4 position-relative group">
+    <div class="card {{ 'border-success' if poll.is_active else 'bg-light text-muted' }}">
+      <div class="card-body text-center">
+        <h5 class="card-title">{{ poll.title }}</h5>
+        <p><small>Vence: {{ poll.expiration_date[:10] }}</small></p>
+        <p><small>Total de votos: {{ poll.votes | length }}</small></p>
+        <p><span class="badge {{ 'bg-success' if poll.is_active else 'bg-secondary' }}">● {{ 'Disponível' if poll.is_active else 'Encerrada' }}</span></p>
+        {% if poll.is_active %}
+          <a href="{{ url_for('public.vote', poll_id=poll.id) }}" class="btn btn-00a859">Iniciar votação</a>
+        {% endif %}
+      </div>
+    </div>
+    {% if session.get('admin') %}
+    <div class="position-absolute top-0 end-0 m-2 opacity-0 group-hover:opacity-100">
+      <!-- Editar -->
+      <a href="{{ url_for('admin.edit_poll', poll_id=poll.id) }}" class="text-00a859 me-2">
+        <i class="bi bi-pencil-fill"></i>
+      </a>
+      <!-- Excluir -->
+      <a href="#" onclick="confirmDelete('{{ poll.id }}')" class="text-danger">
+        <i class="bi bi-trash-fill"></i>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+  function confirmDelete(id) {
+    if (!confirm('Confirma exclusão dessa votação?')) return;
+    fetch(`/admin/delete_poll/${id}`)
+      .then(() => location.reload());
+  }
+</script>
 {% endblock %}

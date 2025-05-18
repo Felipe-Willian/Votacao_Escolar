@@ -1,21 +1,59 @@
 {% extends 'base.html' %}
 {% block content %}
-  <h2>{{ poll.title }}</h2>
-  <p>{{ poll.description }}</p>
-  <form method="POST">
-    <label>Código (Sala-Chamada):</label>
-    <input type="text" name="code" required>
+<section class="py-4 text-center text-white bg-00a859 mb-4">
+  <h1>{{ poll.title }}</h1>
+</section>
 
-    <fieldset>
-      <legend>Opções</legend>
-      {% for opt in poll.options %}
-        <label>
-          <input type="radio" name="option" value="{{ opt }}" required>
-          {{ opt }}
-        </label><br>
+<form id="validate-form" class="col-6 mx-auto">
+  <div class="mb-3">
+    <label class="form-label">Classe</label>
+    <select id="cls-select" class="form-select" required>
+      <option value="">Selecione...</option>
+      {% for cls in classes %}
+      <option value="{{ cls.id }}">{{ cls.title }}</option>
       {% endfor %}
-    </fieldset>
+    </select>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Nº Chamada</label>
+    <input type="number" id="num-input" class="form-control" min="1" max="50" required>
+  </div>
+  <button type="button" id="validate-btn" class="btn btn-00a859">Validar</button>
+</form>
 
-    <button type="submit">Enviar Voto</button>
-  </form>
+<form method="POST" id="vote-form" style="display:none;" class="col-6 mx-auto">
+  <input type="hidden" name="code" id="hidden-code">
+  <div class="mb-3">
+    {% for opt in poll.options %}
+    <div class="form-check">
+      <input
+        class="form-check-input"
+        type="radio"
+        name="option"
+        id="opt{{ loop.index }}"
+        value="{{ opt }}"
+        required
+      >
+      <label class="form-check-label" for="opt{{ loop.index }}">{{ opt }}</label>
+    </div>
+    {% endfor %}
+  </div>
+  <button type="submit" class="btn btn-primary">Enviar Voto</button>
+</form>
+
+<script>
+  const allowed = {{ poll.allowed_codes|tojson }};
+  document.getElementById('validate-btn').onclick = () => {
+    const cls = document.getElementById('cls-select').value;
+    const num = String(document.getElementById('num-input').value).padStart(2, '0');
+    const code = `${cls}-${num}`;
+    if (!allowed.includes(code)) {
+      alert('Você não está autorizado a votar nesta enquete.');
+      return;
+    }
+    document.getElementById('hidden-code').value = code;
+    document.getElementById('validate-form').style.display = 'none';
+    document.getElementById('vote-form').style.display = 'block';
+  };
+</script>
 {% endblock %}

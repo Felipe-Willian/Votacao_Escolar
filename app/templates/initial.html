@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% block content %}
-  <div class="text-center mt-5">
-    <img src="/static/Logo_sistema.png" alt="Logo" class="mb-4" style="max-height:120px;">
-    <div class="d-grid gap-3 col-6 mx-auto">
-      <a href="/role/docente" class="btn btn-primary btn-lg">Sou Docente</a>
-      <a href="/role/aluno" class="btn btn-secondary btn-lg">Sou Aluno</a>
-    </div>
+<div class="text-center mt-5">
+  <img src="/static/Logo_sistema.png" alt="Logo" class="mb-4" style="max-height:120px;">
+  <div class="d-grid gap-3 col-6 mx-auto">
+    <a href="{{ url_for('public.role_docente') }}" class="btn btn-primary btn-lg">Sou Docente</a>
+    <a href="{{ url_for('public.role_aluno') }}" class="btn btn-secondary btn-lg">Sou Aluno</a>
   </div>
+</div>
 {% endblock %}

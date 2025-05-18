@@ -1,9 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
-  <h2>Login Administrativo</h2>
-  {% if error %}<p class="text-danger">{{ error }}</p>{% endif %}
-  <form method="POST">
-    <input type="password" name="password" placeholder="Senha" required>
-    <button type="submit">Entrar</button>
-  </form>
+<section class="py-4 text-center text-white bg-00a859 mb-4">
+  <h1>Login Administrativo</h1>
+</section>
+<form method="POST" class="col-4 mx-auto">
+  <div class="mb-3">
+    <input type="password" name="password" class="form-control" placeholder="Senha" required>
+  </div>
+  <button type="submit" class="btn btn-primary w-100">Entrar</button>
+</form>
 {% endblock %}

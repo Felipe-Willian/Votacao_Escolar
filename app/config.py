@@ -1,12 +1,7 @@
 import os
 from dotenv import load_dotenv
-
 load_dotenv()
-
-token = os.getenv('SUPABASE_KEY')
-url   = os.getenv('SUPABASE_URL')
-
 class Config:
-    SECRET_KEY     = os.getenv('SECRET_KEY', 'sua-chave-secreta')
-    SUPABASE_URL   = url
-    SUPABASE_KEY   = token
+    SECRET_KEY = os.getenv('SECRET_KEY', 'sua-chave')
+    SUPABASE_URL = os.getenv('SUPABASE_URL')
+    SUPABASE_KEY = os.getenv('SUPABASE_KEY')
