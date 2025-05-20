@@ -1,25 +1,51 @@
 {% extends 'base.html' %}
 {% block content %}
-<section class="py-4 text-center text-white bg-00a859 mb-4"><h1>Painel</h1></section>
-<div class="col-8 mx-auto">
-  {% for item in polls %}
-    <h4>{{ item.poll.title }}</h4>
-    <canvas id="chart-{{ loop.index0 }}"></canvas>
-  {% endfor %}
+<section class="py-4 text-center text-white bg-00a859 mb-4">
+  <h1>Painel</h1>
+</section>
+
+<div class="container">
+  <div class="row g-4">
+    {% for item in polls %}
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title text-00a859">{{ item.poll.title }}</h5>
+          <p class="card-text text-muted">
+            Criada em {{ item.poll.created_at[:10] }} &middot;
+            Vence em {{ item.poll.expiration_date[:10] }}
+          </p>
+          <canvas id="chart-{{ loop.index0 }}" style="max-height:300px;"></canvas>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
 </div>
+
 <script>
   document.addEventListener('DOMContentLoaded', () => {
+    // cores padrão que se repetem se mais opções
+    const COLORS = ['#00a859','#ffc107','#17a2b8','#dc3545','#6f42c1','#fd7e14','#20c997'];
+
     {% for item in polls %}
-      new Chart(
-        document.getElementById('chart-{{ loop.index0 }}').getContext('2d'),
-        {
-          type: 'bar',
-          data: {
-            labels: {{ item.chart.labels | tojson }},
-            datasets: [{ label: 'Votos', data: {{ item.chart.data | tojson }} }]
+      const ctx{{loop.index0}} = document.getElementById('chart-{{ loop.index0 }}').getContext('2d');
+      new Chart(ctx{{loop.index0}}, {
+        type: 'pie',
+        data: {
+          labels: {{ item.chart.labels | tojson }},
+          datasets: [{
+            data: {{ item.chart.data | tojson }},
+            backgroundColor: {{ item.chart.labels | tojson }}.map((_,i)=>COLORS[i % COLORS.length])
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { family: 'Roboto', size: 14 } } },
+            tooltip: { bodyFont: { family: 'Roboto' } }
           }
         }
-      );
+      });
     {% endfor %}
   });
 </script>
