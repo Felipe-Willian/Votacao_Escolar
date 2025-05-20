@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, flash, session, url_for
 from app.utils.supabase import get_supabase
+from datetime import datetime
 
 bp = Blueprint('public', __name__)
 
@@ -24,24 +25,38 @@ def role_aluno():
 def index():
     if session.get('role') not in ('aluno',) and not session.get('admin'):
         return redirect(url_for('public.initial'))
+
     sb = get_supabase()
-    # busca todas as enquetes
+    # 1) busca todas as polls ordenadas pela expiração
     polls = sb.table('polls')\
               .select('*')\
               .order('expiration_date', desc=False)\
-              .order('is_active', desc=False)\
               .execute().data
-    # busca todos os votos num único batch
+
+    # 2) coleta votos num único batch
     ids = [p['id'] for p in polls]
     votes = sb.table('votes').select('*').in_('poll_id', ids).execute().data if ids else []
-    # agrupa votos por poll_id
     by_poll = {}
     for v in votes:
         by_poll.setdefault(v['poll_id'], []).append(v)
-    # atribui lista de votos a cada poll
     for p in polls:
         p['votes'] = by_poll.get(p['id'], [])
-    return render_template('index.html', polls=polls)
+
+    # 3) separa por data de expiração
+    now = datetime.utcnow()
+    active_polls = []
+    expired_polls = []
+    for p in polls:
+        # assume expiration_date vem como ISO string
+        exp = datetime.fromisoformat(p['expiration_date'])
+        if exp >= now and p['is_active']:
+            active_polls.append(p)
+        else:
+            expired_polls.append(p)
+
+    return render_template('index.html',
+                           active_polls=active_polls,
+                           expired_polls=expired_polls)
 
 @bp.route('/new_poll', methods=['GET', 'POST'])
 def new_poll():

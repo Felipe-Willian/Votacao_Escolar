@@ -4,79 +4,78 @@
   <h1>Painel</h1>
 </section>
 
-<div class="container">
-  <div class="row g-4">
-    {% for item in polls %}
-    <div class="col-md-6">
-      <div class="card shadow-sm h-100">
-        <div class="card-body">
-          <h5 class="card-title text-00a859">{{ item.poll.title }}</h5>
-          <p class="card-text text-muted">
-            Criada em {{ item.poll.created_at[:10] }} &middot;
-            Vence em {{ item.poll.expiration_date[:10] }}
-          </p>
-          <canvas id="chart-{{ loop.index0 }}" style="max-height:300px;"></canvas>
+<div class="container mb-5">
+  <!-- Em Andamento -->
+  <section class="mb-4">
+    <h2 class="text-00a859">Votações em Andamento</h2>
+    <div class="row row-cols-1 row-cols-md-2 g-4 mt-2">
+      {% if active_polls %}
+        {% for item in active_polls %}
+        <div class="col">
+          <div class="card h-100 border-success shadow-sm">
+            <div class="card-body d-flex flex-column">
+              <div class="flex-grow-1">
+                <h5 class="card-title">{{ item.poll.title }}</h5>
+                <p class="card-text text-muted">
+                  Vence em {{ item.poll.expiration_date[:10] }}
+                </p>
+                <span class="badge bg-success mb-2">● Em Andamento</span>
+              </div>
+              <canvas id="chart-active-{{ loop.index0 }}" style="max-height:200px;"></canvas>
+            </div>
+          </div>
         </div>
-      </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-center text-muted">Não há votações em andamento.</p>
+      {% endif %}
     </div>
-    {% endfor %}
-  </div>
+  </section>
+
+  <!-- Encerradas -->
+  <section>
+    <h2 class="text-secondary">Votações Encerradas</h2>
+    <div class="row row-cols-1 row-cols-md-2 g-4 mt-2">
+      {% if expired_polls %}
+        {% for item in expired_polls %}
+        <div class="col">
+          <div class="card h-100 bg-light text-muted shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title">{{ item.poll.title }}</h5>
+              <p class="card-text"><small>Venceu em {{ item.poll.expiration_date[:10] }}</small></p>
+              <span class="badge bg-secondary">● Encerrada</span>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-center text-muted">Não há votações encerradas.</p>
+      {% endif %}
+    </div>
+  </section>
 </div>
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    // cores padrão que se repetem se mais opções
     const COLORS = ['#00a859','#ffc107','#17a2b8','#dc3545','#6f42c1','#fd7e14','#20c997'];
 
-    {% for item in polls %}
-      // Pega labels e dados originais
-      const rawLabels{{loop.index0}} = {{ item.chart.labels | tojson }};
-      const rawData{{loop.index0}}   = {{ item.chart.data   | tojson }};
-
-      // Empacota, ordena por data desc
-      const zipped{{loop.index0}} = rawLabels{{loop.index0}}.map((lab, i) => ({
-        label: lab,
-        value: rawData{{loop.index0}}[i]
-      })).sort((a,b) => b.value - a.value);
-
-      // Separa de volta em arrays ordenados
-      const labels{{loop.index0}} = zipped{{loop.index0}}.map(el => el.label);
-      const data{{loop.index0}}   = zipped{{loop.index0}}.map(el => el.value);
-
-      // Configura o canvas
-      const ctx{{loop.index0}} = document.getElementById('chart-{{ loop.index0 }}').getContext('2d');
-      new Chart(ctx{{loop.index0}}, {
+    // Gráficos para enquetes ativas
+    {% for item in active_polls %}
+      const ctxA{{ loop.index0 }} = document.getElementById('chart-active-{{ loop.index0 }}').getContext('2d');
+      new Chart(ctxA{{ loop.index0 }}, {
         type: 'pie',
         data: {
-          labels: labels{{loop.index0}},
-          datasets: [{
-            data: data{{loop.index0}},
-            backgroundColor: labels{{loop.index0}}.map((_,i)=>COLORS[i % COLORS.length])
+          labels: {{ item.chart.labels|tojson }},
+          datasets: [{ 
+            data: {{ item.chart.data|tojson }},
+            backgroundColor: {{ item.chart.labels|tojson }}.map((_,i)=>COLORS[i%COLORS.length])
           }]
         },
         options: {
-          plugins: {
-            legend: {
-              position: 'right',
-              labels: {
-                font: { family: 'Roboto', size: 14 },
-                generateLabels: (chart) => {
-                  // gera as legendas com numeração ordinal
-                  return chart.data.labels.map((label, i) => ({
-                    text: `${i+1}ª ${label}`,
-                    fillStyle: chart.data.datasets[0].backgroundColor[i],
-                    hidden: false,
-                    index: i
-                  }));
-                }
-              }
-            },
-            tooltip: { bodyFont: { family: 'Roboto' } }
-          }
+          plugins: { legend: { position: 'right' } }
         }
       });
     {% endfor %}
   });
 </script>
-
 {% endblock %}

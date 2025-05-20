@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, session, flash, url_for
 from app.utils.supabase import get_supabase
 from app.charts import generate_chart_data
+from datetime import datetime
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 @bp.route('/login', methods=['GET','POST'])
@@ -17,18 +18,41 @@ def logout(): session.clear(); return redirect(url_for('public.initial'))
 
 @bp.route('/dashboard')
 def dashboard():
-    if not session.get('admin'): return redirect(url_for('admin.login'))
+    if not session.get('admin'):
+        return redirect(url_for('admin.login'))
     sb = get_supabase()
+
+    # 1) busca todas as enquetes
     polls = sb.table('polls').select('*').execute().data
-    ids = [p['id'] for p in polls]
-    votes = sb.table('votes').select('*').in_('poll_id',ids).execute().data if ids else []
-    by_poll={}
-    for v in votes: by_poll.setdefault(v['poll_id'],[]).append(v)
-    data=[]
+
+    # 2) coleta todos os votos num batch
+    poll_ids = [p['id'] for p in polls]
+    votes = sb.table('votes').select('*').in_('poll_id', poll_ids).execute().data if poll_ids else []
+    votes_by_poll = {}
+    for v in votes:
+        votes_by_poll.setdefault(v['poll_id'], []).append(v)
+
+    # 3) gera chart_data e anexa votos
+    enriched = []
     for p in polls:
-        chart=generate_chart_data(by_poll.get(p['id'],[]))
-        data.append({'poll':p,'chart':chart})
-    return render_template('dashboard.html', polls=data)
+        p['votes'] = votes_by_poll.get(p['id'], [])
+        chart = generate_chart_data(p['votes'])
+        enriched.append({ 'poll': p, 'chart': chart })
+
+    # 4) separa por data
+    now = datetime.utcnow()
+    active_polls = []
+    expired_polls = []
+    for item in enriched:
+        exp = datetime.fromisoformat(item['poll']['expiration_date'])
+        if exp >= now and item['poll']['is_active']:
+            active_polls.append(item)
+        else:
+            expired_polls.append(item)
+
+    return render_template('dashboard.html',
+                           active_polls=active_polls,
+                           expired_polls=expired_polls)
 
 @bp.route('/new', methods=['GET', 'POST'])
 def new_poll():
