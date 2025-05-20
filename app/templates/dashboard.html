@@ -29,19 +29,48 @@
     const COLORS = ['#00a859','#ffc107','#17a2b8','#dc3545','#6f42c1','#fd7e14','#20c997'];
 
     {% for item in polls %}
+      // Pega labels e dados originais
+      const rawLabels{{loop.index0}} = {{ item.chart.labels | tojson }};
+      const rawData{{loop.index0}}   = {{ item.chart.data   | tojson }};
+
+      // Empacota, ordena por data desc
+      const zipped{{loop.index0}} = rawLabels{{loop.index0}}.map((lab, i) => ({
+        label: lab,
+        value: rawData{{loop.index0}}[i]
+      })).sort((a,b) => b.value - a.value);
+
+      // Separa de volta em arrays ordenados
+      const labels{{loop.index0}} = zipped{{loop.index0}}.map(el => el.label);
+      const data{{loop.index0}}   = zipped{{loop.index0}}.map(el => el.value);
+
+      // Configura o canvas
       const ctx{{loop.index0}} = document.getElementById('chart-{{ loop.index0 }}').getContext('2d');
       new Chart(ctx{{loop.index0}}, {
         type: 'pie',
         data: {
-          labels: {{ item.chart.labels | tojson }},
+          labels: labels{{loop.index0}},
           datasets: [{
-            data: {{ item.chart.data | tojson }},
-            backgroundColor: {{ item.chart.labels | tojson }}.map((_,i)=>COLORS[i % COLORS.length])
+            data: data{{loop.index0}},
+            backgroundColor: labels{{loop.index0}}.map((_,i)=>COLORS[i % COLORS.length])
           }]
         },
         options: {
           plugins: {
-            legend: { position: 'bottom', labels: { font: { family: 'Roboto', size: 14 } } },
+            legend: {
+              position: 'right',
+              labels: {
+                font: { family: 'Roboto', size: 14 },
+                generateLabels: (chart) => {
+                  // gera as legendas com numeração ordinal
+                  return chart.data.labels.map((label, i) => ({
+                    text: `${i+1}ª ${label}`,
+                    fillStyle: chart.data.datasets[0].backgroundColor[i],
+                    hidden: false,
+                    index: i
+                  }));
+                }
+              }
+            },
             tooltip: { bodyFont: { family: 'Roboto' } }
           }
         }
@@ -49,4 +78,5 @@
     {% endfor %}
   });
 </script>
+
 {% endblock %}
