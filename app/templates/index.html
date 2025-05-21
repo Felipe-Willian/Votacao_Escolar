@@ -8,9 +8,21 @@
 <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
   {% if active_polls %}
     {% for poll in active_polls %}
-    <div class="col">
-      <div class="card h-100 border-success">
-        <div class="card-body d-flex flex-column justify-content-between text-center">
+    <div class="col position-relative group">
+      <!-- Ícones só para admin -->
+      {% if session.get('admin') %}
+      <div class="position-absolute top-0 end-0 m-2 opacity-0 group-hover:opacity-100">
+        <a href="{{ url_for('admin.edit_poll', poll_id=poll.id) }}" class="text-00a859 me-2">
+          <i class="bi bi-pencil-fill"></i>
+        </a>
+        <a href="#" onclick="confirmDelete('{{ poll.id }}')" class="text-danger">
+          <i class="bi bi-trash-fill"></i>
+        </a>
+      </div>
+      {% endif %}
+
+      <div class="card h-100 border-success shadow-sm">
+        <div class="card-body text-center d-flex flex-column justify-content-between">
           <div>
             <h5 class="card-title text-00a859">{{ poll.title }}</h5>
             <p class="card-text"><small>Vence: {{ poll.expiration_date[:10] }}</small></p>
@@ -35,8 +47,20 @@
 <div class="row row-cols-1 row-cols-md-3 g-4">
   {% if expired_polls %}
     {% for poll in expired_polls %}
-    <div class="col">
-      <div class="card h-100 bg-light text-muted">
+    <div class="col position-relative group">
+      <!-- Ícones só para admin -->
+      {% if session.get('admin') %}
+      <div class="position-absolute top-0 end-0 m-2 opacity-0 group-hover:opacity-100">
+        <a href="{{ url_for('admin.edit_poll', poll_id=poll.id) }}" class="text-00a859 me-2">
+          <i class="bi bi-pencil-fill"></i>
+        </a>
+        <a href="#" onclick="confirmDelete('{{ poll.id }}')" class="text-danger">
+          <i class="bi bi-trash-fill"></i>
+        </a>
+      </div>
+      {% endif %}
+
+      <div class="card h-100 bg-light text-muted shadow-sm">
         <div class="card-body text-center">
           <h5 class="card-title">{{ poll.title }}</h5>
           <p class="card-text"><small>Venceu: {{ poll.expiration_date[:10] }}</small></p>
@@ -49,5 +73,13 @@
     <p class="text-center text-muted">Nenhuma votação encerrada.</p>
   {% endif %}
 </div>
+
+<script>
+function confirmDelete(id) {
+  if (!confirm('Confirma exclusão desta votação?')) return;
+  fetch(`/admin/delete_poll/${id}`)
+    .then(() => location.reload());
+}
+</script>
 
 {% endblock %}
