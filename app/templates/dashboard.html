@@ -5,17 +5,26 @@
 </section>
 
 <div class="container mb-5">
-  <!-- Em Andamento -->
+  <!-- Votações em Andamento -->
   <section class="mb-4">
     <h2 class="text-00a859">Votações em Andamento</h2>
     <div class="row row-cols-1 row-cols-md-2 g-4 mt-2">
       {% if active_polls %}
         {% for item in active_polls %}
-        <div class="col">
+        <div class="col position-relative group">
+          <!-- Ações de edição/exclusão -->
+          <div class="position-absolute top-0 end-0 m-2 opacity-0 group-hover:opacity-100">
+            <a href="{{ url_for('admin.edit_poll', poll_id=item.poll.id) }}" class="text-00a859 me-2">
+              <i class="bi bi-pencil-fill"></i>
+            </a>
+            <a href="#" onclick="confirmDelete('{{ item.poll.id }}')" class="text-danger">
+              <i class="bi bi-trash-fill"></i>
+            </a>
+          </div>
           <div class="card h-100 border-success shadow-sm">
             <div class="card-body d-flex flex-column">
               <div class="flex-grow-1">
-                <h5 class="card-title">{{ item.poll.title }}</h5>
+                <h5 class="card-title text-00a859">{{ item.poll.title }}</h5>
                 <p class="card-text text-muted">
                   Vence em {{ item.poll.expiration_date[:10] }}
                 </p>
@@ -32,18 +41,30 @@
     </div>
   </section>
 
-  <!-- Encerradas -->
+  <!-- Votações Encerradas -->
   <section>
     <h2 class="text-secondary">Votações Encerradas</h2>
     <div class="row row-cols-1 row-cols-md-2 g-4 mt-2">
       {% if expired_polls %}
         {% for item in expired_polls %}
-        <div class="col">
+        <div class="col position-relative group">
+          <!-- Ações de edição/exclusão -->
+          <div class="position-absolute top-0 end-0 m-2 opacity-0 group-hover:opacity-100">
+            <a href="{{ url_for('admin.edit_poll', poll_id=item.poll.id) }}" class="text-00a859 me-2">
+              <i class="bi bi-pencil-fill"></i>
+            </a>
+            <a href="#" onclick="confirmDelete('{{ item.poll.id }}')" class="text-danger">
+              <i class="bi bi-trash-fill"></i>
+            </a>
+          </div>
           <div class="card h-100 bg-light text-muted shadow-sm">
-            <div class="card-body">
-              <h5 class="card-title">{{ item.poll.title }}</h5>
-              <p class="card-text"><small>Venceu em {{ item.poll.expiration_date[:10] }}</small></p>
-              <span class="badge bg-secondary">● Encerrada</span>
+            <div class="card-body d-flex flex-column">
+              <div class="flex-grow-1 text-center">
+                <h5 class="card-title">{{ item.poll.title }}</h5>
+                <p class="card-text"><small>Venceu em {{ item.poll.expiration_date[:10] }}</small></p>
+                <span class="badge bg-secondary mb-2">● Encerrada</span>
+              </div>
+              <canvas id="chart-expired-{{ loop.index0 }}" style="max-height:200px;"></canvas>
             </div>
           </div>
         </div>
@@ -66,7 +87,25 @@
         type: 'pie',
         data: {
           labels: {{ item.chart.labels|tojson }},
-          datasets: [{ 
+          datasets: [{
+            data: {{ item.chart.data|tojson }},
+            backgroundColor: {{ item.chart.labels|tojson }}.map((_,i)=>COLORS[i%COLORS.length])
+          }]
+        },
+        options: {
+          plugins: { legend: { position: 'right' } }
+        }
+      });
+    {% endfor %}
+
+    // Gráficos para enquetes encerradas
+    {% for item in expired_polls %}
+      const ctxE{{ loop.index0 }} = document.getElementById('chart-expired-{{ loop.index0 }}').getContext('2d');
+      new Chart(ctxE{{ loop.index0 }}, {
+        type: 'pie',
+        data: {
+          labels: {{ item.chart.labels|tojson }},
+          datasets: [{
             data: {{ item.chart.data|tojson }},
             backgroundColor: {{ item.chart.labels|tojson }}.map((_,i)=>COLORS[i%COLORS.length])
           }]
@@ -77,5 +116,10 @@
       });
     {% endfor %}
   });
+
+  function confirmDelete(id) {
+    if (!confirm('Confirma exclusão desta votação?')) return;
+    fetch(`/admin/delete_poll/${id}`).then(()=>window.location.reload());
+  }
 </script>
 {% endblock %}
